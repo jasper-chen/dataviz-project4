@@ -74,7 +74,7 @@ function run () {
     console.log('running...');
     getData(function(data) {
       tabulate(data, ['age','2003','2008','2013']);
-      console.log('done'); 
+      console.log(data); 
     });
 }
 
@@ -252,7 +252,8 @@ function getData (f) {
     //where you call the file
     d3.json("avg", function(error, json) {
         d3.select("#loading").remove();
-        f(json)
+        f(json);
+        console.log(json);
     })
 }
 

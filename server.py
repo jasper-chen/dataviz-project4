@@ -214,7 +214,11 @@ def data ():
 def static (name="demo.html"):
     return static_file(name, root='.')
 
-@get('/text')
+@get('/test.html')
+def static (name="test.html"):
+    return static_file(name, root='.')
+
+@get('/topcause')
 def ageData():
     print ("GETTING AGE DATA")
     #AgeAndTopCause = pullbyAgeAndTopCause()
