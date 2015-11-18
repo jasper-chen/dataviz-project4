@@ -186,6 +186,85 @@ def pullbyAgeAndTopCause():
     except:
         print "ERROR!!!"
         conn.close()
+        raise
+
+def activityhelper(): 
+    ### do not touch unless you know what you are doing ###
+    ### creates activity1.json ### 
+    cur.execute("""SELECT mortality.Activity_Code,mortality.Cause_Recode_39, mortality.year, mortality.Age_Key, AVG(mortality.Age_Value), COUNT(mortality.Age_Value), recodecounts.recodetotal
+            FROM mortality
+            JOIN (SELECT Activity_Code, Cause_Recode_39, year, COUNT(Age_Key) as recodetotal
+                  FROM mortality
+                  WHERE Age_Value != '999'
+                  GROUP BY Activity_Code, year, Cause_Recode_39) recodecounts
+            ON mortality.Cause_Recode_39 = recodecounts.Cause_Recode_39 and mortality.year = recodecounts.year
+            WHERE mortality.Age_Value != '999'
+            GROUP BY mortality.Activity_Code,mortality.Cause_Recode_39,
+                mortality.year, 
+                mortality.Age_Key""")
+
+    returnJson = []
+    data = []
+
+    for (activity, cause, year, ageKey, ageValue, refinedAgeCount, recodeCount,) in cur.fetchall():
+        #converts to its real age based on the key and value
+        age = converttoYearAge(ageKey,ageValue)
+
+        data.append({"age": age,
+             "activity": str(activity),
+             "year": str(year), 
+             "cause": str(cause),
+             "refinedAgeCount": refinedAgeCount,
+             "recodeCount": recodeCount})
+
+    #grouping by activity
+    grouped_data = group_by(data, "activity")
+    returnJson.append(grouped_data)
+    conn.close()
+    return returnJson
+    ### do not touch unless you know what you are doing ###   
+
+def pullActivityData():
+    conn = sqlite3.connect(MORTALITYDB)
+    cur = conn.cursor()
+
+    try:
+        #returnJson = activityhelper()
+        returnJson = []
+        with open('./activity1.json') as f:
+            for line in f:
+                returnJson.append(json.loads(line))
+
+        newJson = []
+        groupedData = returnJson[0]["ActivityData"][0] #artifact
+
+        for activity in groupedData.keys():
+            activityJson = {"activity": activity}
+            for row in groupedData[activity]:
+                if row["cause"] in activityJson:
+                    activityJson[row["cause"]] += float(row["refinedAgeCount"]) #not optimized
+                else:
+                    activityJson[row["cause"]] = float(row["refinedAgeCount"])
+            newJson.append(activityJson)
+        newest = group_by(newJson,"activity")
+
+
+        # for cause in groupedData.keys():
+        #     causeJson = {"cause": cause}
+        #     for row in groupedData[cause]:
+        #         age = converttoYearAge(row["ageKey"],row["avgAge"])
+
+        #         if row["year"] in causeJson:
+        #             causeJson[row["year"]] += (row["refinedAgeCount"]/float(row["recodeCount"]))*age
+        #         else:
+        #             causeJson[row["year"]] = (row["refinedAgeCount"]/float(row["recodeCount"]))*age
+
+        #     returnJson.append(causeJson)
+        return newest
+
+    except:
+        print "ERROR!!!"
+        conn.close()
         raise    
 
                          
@@ -218,6 +297,10 @@ def static (name="demo.html"):
 def static (name="test.html"):
     return static_file(name, root='.')
 
+@get('/project4.html')
+def static (name="project4.html"):
+    return static_file(name, root='.')    
+
 @get('/topcause')
 def ageData():
     print ("GETTING AGE DATA")
@@ -241,6 +324,18 @@ def ageData():
             data.append(json.loads(line))
 
     return {'AvgData': data}
+
+@get('/activity')
+def actvityData():
+    print ("GETTING ACTIVITY DATA")
+    ActivityData = pullActivityData()
+    return {"ActivityData" : ActivityData}
+    # data = []
+    # with open('./activity1.json') as f:
+    #     for line in f:
+    #         data.append(json.loads(line))
+
+    # return {'Activity': data}    
 
 # main entry point
 # run the server on the given port
