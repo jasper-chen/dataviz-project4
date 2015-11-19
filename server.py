@@ -265,7 +265,38 @@ def pullActivityData():
     except:
         print "ERROR!!!"
         conn.close()
-        raise    
+        raise
+
+def newDataPull():
+    conn = sqlite3.connect(MORTALITYDB)
+    cur = conn.cursor()
+
+    try:
+        cur.execute("""SELECT Cause_Recode_39, Activity_Code, Place_Of_Death, COUNT(*)
+                      FROM mortality
+                      WHERE Activity_Code != ""
+                      GROUP BY Cause_Recode_39, Activity_Code, Place_Of_Death
+                    """)
+        returnJson = []
+        data = []
+
+        for (cause, activity, place, count,) in cur.fetchall():
+            #converts to its real age based on the key and value
+
+            data.append({"cause": int(cause),
+                 "activity": activity, 
+                 "place": int(place),
+                 "count": int(count)})
+
+        conn.close()
+
+        return data
+
+    except:
+        print "ERROR!!!"
+        conn.close()
+        raise
+
 
                          
 # URI for getting data
@@ -339,6 +370,12 @@ def actvityData():
 
 # main entry point
 # run the server on the given port
+
+@get('/new')
+def newData():
+    print ("GETTING NEW DATA")
+    newData = newDataPull()
+    return {"ActivityData" : newData}
 
 def main (p):
     run(host='0.0.0.0', port=p)
