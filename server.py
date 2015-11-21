@@ -374,8 +374,17 @@ def actvityData():
 @get('/new')
 def newData():
     print ("GETTING NEW DATA")
-    newData = newDataPull()
-    return {"ActivityData" : newData}
+    #newData = newDataPull()
+    #return {"ActivityData" : newData}
+    data = []
+    with open('./new.json') as f:
+        for line in f:
+            data.append(json.loads(line))
+
+    return {'ActivityData': data[0]['ActivityData'], 
+            'Viz1' : group_by(data[0]['ActivityData'],"place"), 
+            'Viz2' : group_by(data[0]['ActivityData'],"cause"),
+            'Viz3' : group_by(data[0]['ActivityData'],"activity")} 
 
 def main (p):
     run(host='0.0.0.0', port=p)

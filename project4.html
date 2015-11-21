@@ -14,133 +14,182 @@
   
       <body>
         <div>
-          <svg id="viz1" width="500" height="500" style=" display:inline-block;">
+
+          <svg id="Viz1" width="400" height="400" style=" display:inline-block;">
           </svg>
-          <svg id="viz2" width="500" height="500" style=" display:inline-block;">
+          
+          <svg id="Viz2" width="400" height="400" style=" display:inline-block;">
           </svg>
-          <svg id="viz3" width="500" height="500" style=" display:inline-block;">
-          </svg>      
+          <svg id="Viz3" width="400" height="400" style=" display:inline-block;">
+          </svg>  
         </div>
       </body>
-
     <script>
 
 /*
  * Call run when the page finishes loading
  *
  */
+
+
+var GLOBAL = {data: []};
       
 window.addEventListener("load",run);
 
 function run () {
-/*    var svg = d3.select("#viz");
-    svg.append("text")
-	.attr("id","loading")
-	.attr("x",+svg.attr("width")/2)
-	.attr("y",+svg.attr("height")/2)
-	.attr("dy","0.35em")
-	.style("text-anchor","middle")
-	.text("loading data...");*/
-    console.log('running...');
-    getData(function(data) {
-      console.log(data); 
-    });
+    var width = 400,
+        height = 400,
+        radius = Math.min(width, height) / 2;
+
+    var color = d3.scale.category20();
+
+    var arc = d3.svg.arc()
+        .innerRadius(radius - 100)
+        .outerRadius(radius - 20);
+
+    var pie = d3.layout.pie()
+        .value(function(d) { return d.count;})
+        .sort(null);
+
+    var svg1 = initializeSvg("#Viz1",width,height,radius);
+    var svg2 = initializeSvg("#Viz2",width,height,radius);
+    var svg3 = initializeSvg("#Viz3",width,height,radius);
+
+    d3.json("new").on("progress", function() { console.log("progress", d3.event.loaded); })
+    .on("load", function(json){
+        //once data is loaded
+
+        GLOBAL.data = json;
+
+        data = countbyColumn('Viz1','place', null, function() {return true}, null);
+        var g = svg1.selectAll("path")
+            .data(pie(data))
+            .enter().append("path")        
+            .attr("fill", function(d,i) {return color(i);})
+            .attr("d", arc)
+            .each(function(d) { this._current = d;})
+
+        data = countbyColumn('Viz2','cause', null, function() {return true}, null);
+        var g = svg2.selectAll("path")
+            .data(pie(data))
+            .enter().append("path")
+            .attr("fill", function(d,i) {return color(i);})
+            .attr("d", arc)
+            .each(function(d) { this._current = d;});  
+
+        data = countbyColumn('Viz3','activity', null, function() {return true},null);
+        var g = svg3.selectAll("path")
+            .data(pie(data))
+            .enter().append("path")
+            .attr("fill", function(d,i) {return color(i);})
+            .attr("d", arc)
+            .each(function(d) { this._current = d;});  
+
+        svg1.selectAll("path").on("click", function(d){ 
+            updateSvg("Viz2","cause","place",d.data.index);
+            updateSvg("Viz3","activity","place",d.data.index);
+        });
+        svg2.selectAll("path").on("click", function(d){ 
+            updateSvg("Viz1","place","cause",d.data.index);
+            updateSvg("Viz3","activity","cause",d.data.index);
+        });
+        svg3.selectAll("path").on("click", function(d){ 
+            updateSvg("Viz1","place","activity",d.data.index);
+            updateSvg("Viz2","cause","activity",d.data.index);
+        });
+    }).get();
+        
 }
 
-/*
- * Function for getting the total from the
- * data for a given cause and a given year
- * (returns 0 if there's no such entry in
- * the data)
- * 
- */
+function initializeSvg(id,width,height,radius){
+    svg = d3.select(id).append("svg")
+            .attr("width", width)
+            .attr("height", height)
+            .text("hello")
+        .append("g")
+            .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")")
 
-function getTotal (data,cause,year) {
-    if (cause in data) { 
-	if (year in data[cause]) {
-	    if (data[cause][year].length > 0) { 
-		return data[cause][year][0].total;
-	    }
-	}
+    return svg
+}
+
+function updateSvg(viz,category,filter,num){
+
+    data = countbyColumn(viz,category,filter,selector,num);
+
+    var width = 400,
+        height = 400,
+        radius = Math.min(width, height) / 2;
+
+    var color = d3.scale.category20();    
+
+    var arc = d3.svg.arc()
+        .innerRadius(radius - 100)
+        .outerRadius(radius - 20);    
+
+    var pie = d3.layout.pie()
+        .value(function(d) { return d.count;})
+        .sort(null);
+
+    path = d3.select('#' + viz).selectAll("path")
+        .data(pie(data));
+
+    path.transition().duration(750).attrTween("d",arcTween);
+
+    path = d3.select(viz).data(pie(data)); // compute the new angles
+    console.log(path);
+}
+
+function selector(r,filter,num){
+    console.log(+r[filter],+num);
+    console.log(+r[filter]== +num)
+    return +r[filter] == +num;
+}
+
+function countbyColumn(viz,type, filter, pred,num){
+    var h = [];
+    var count = 0;
+    var total = 0;
+    var query = null;
+    
+    var thing = GLOBAL.data[viz];
+    for (i in thing){
+        j_count = 0;
+        var obj = {};
+        for (j in thing[i]){
+            console.log(thing[i][j]);
+            if (pred(thing[i][j],filter,num)){
+                j_count += thing[i][j]['count'];
+                total += thing[i][j]['count'];
+                query = thing[i][j][type];
+            }
+        }
+        var json = {"viz" : viz,
+                    index: i,
+                    count : j_count}
+        h.push(json);
     }
-    return 0;
+    //console.log(h);
+    return h
 }
 
-/* 
- * Create a simple visual representation
- * of the data
- *
- */
+function arcTween(a) {
 
-function createView (data) {
-    
-    // first, sort the data by 2013 numbers
+    var width = 400,
+        height = 400,
+        radius = Math.min(width, height) / 2;
 
-    var causes = Object.keys(data);
-    causes.sort(function(a,b) { return d3.descending(getTotal(data,a,"2013"),
-						     getTotal(data,b,"2013")); })
+    var color = d3.scale.category20();    
 
-    max2013 = d3.max(causes.map(function(d) { return getTotal(data,d,"2013"); }));
-    max2008 = d3.max(causes.map(function(d) { return getTotal(data,d,"2008"); }));
+    var arc = d3.svg.arc()
+        .innerRadius(radius - 100)
+        .outerRadius(radius - 20);  
 
-    var svg = d3.select("#viz");
-    
-    var y = d3.scale.linear()
-	.domain([0,Math.max(max2008,max2013)])
-	.range([+svg.attr("height")-10,10]);
-
-    var g = svg.selectAll("g")
-	.data(causes)
-	.enter()
-	.append("g");
-
-    // note: the width attribute holds strings
-    var x2008 = +svg.attr("width")*1/5;
-    var x2013 = +svg.attr("width")*3/5;
-
-    var y2008 = function(d) { return y(getTotal(data,d,"2008")); };
-    var y2013 = function(d) { return y(getTotal(data,d,"2013")); };
-
-    g.append("circle")
-	.attr("cx",x2008)
-	.attr("cy",y2008)
-	.attr("r","5")
-	.style("fill","red")
-	.style("stroke","none");
-
-    g.append("circle")
-	.attr("cx",x2013)
-	.attr("cy",y2013)
-	.attr("r","5")
-	.style("fill","red")
-	.style("stroke","none");
-
-    g.append("line")
-	.attr("x1",x2008)
-	.attr("y1",y2008)
-	.attr("x2",x2013)
-	.attr("y2",y2013)
-	.style("stroke","red")
-	.style("stroke-width","6px");
-
-    g.on("mouseover",function (d,i) {  
-	d3.select(this).select("line").style("stroke","blue");
-	d3.select(this)
-	    .append("text")
-	    .attr("class","label")
-	    .attr("x",+svg.attr("width")*3/5+20)
-	    .attr("y",function(d) { return y(getTotal(data,d,"2013")); })
-	    .attr("dy","0.35em")
-	    .style("stroke","black")
-	    .style("text-anchor","start")
-	    .text(function(d) { return CAUSE[d]; }) })
-	.on("mouseout",function() { 
-	d3.select(this).select("line").style("stroke","red");
-	    d3.selectAll(".label").remove();
-	});
+    var i = d3.interpolate(this._current, a);
+    this._current = i(0);
+    return function(t) {
+       return arc(i(t));
+  };
 }
-
-
 
 /*
  * Convert a cause code to text
@@ -150,7 +199,7 @@ function createView (data) {
 var CAUSE = {
     "1":"Tuberculosis (A16-A19)",
     "2":"Syphilis (A50-A53)",
-    "3":"Human immunodeficiency virus (HIV) disease (B20-B24)",
+    '3':"Human immunodeficiency virus (HIV) disease (B20-B24)",
     "4":"Malignant neoplasms (C00-C97)",
     "5":"Malignant neoplasm of stomach (C16)",
     "6":"Malignant neoplasms of colon, rectum and anus (C18-C21)",
@@ -192,40 +241,13 @@ var CAUSE = {
     "42":"All other external causes (Y10-Y36,Y87.2,Y89)"
 }
     
-
-/*
- * Pulls the data for a given gender
- * (can be empty)
- * 
- */
-
-/*function getData (gender,f) {
+function getData () {
     //where you call the file
-    d3.json("data")
-	.header("Content-Type", "application/x-www-form-urlencoded")
-	.get("gender="+encodeURIComponent(gender),
-	     function(error,data) {
-		 if (error) {
-		     d3.select("#loading").remove();
-		     console.log(error);
-		 } else {
-		     d3.select("#loading").remove();
-		     console.log(" data =", data);
-		     f(data);
-		 }
-	     });
-}
-*/
-
-function getData (f) {
-    //where you call the file
-    d3.json("activity", function(error, json) {
+    d3.json("new", function(error, json) {
         d3.select("#loading").remove();
-        f(json);
+        GLOBAL.data = +json;
     })
 }
-
-
     </script>
     
   </body>
