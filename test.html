@@ -71,13 +71,13 @@ function tabulate(data, columns) {
 
 function run () {
     getDataAvg(function(data) {
-      tabulate(data['AvgData'][0], ['cause','2003','2008','2013']);
-      console.log(data['AvgData'][0]); 
+      tabulate(data['AvgAge'], ['cause','2003','2008','2013']);
+      console.log(data['AvgAge']); 
     });
 
     getTopCause(function(data) {
-      tabulate(data['TopCause'][0], ['age','2003','2008','2013']);
-      console.log(data['TopCause'][0]); 
+      tabulate(data['AgeAndTopCause'], ['age','2003','2008','2013']);
+      console.log(data['AgeAndTopCause']); 
     });
 }
 
