@@ -9,7 +9,22 @@
     <!-- load D3 library -->
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js" charset="utf-8"></script>
-
+    <style>                                                                /* NEW */
+      .tooltip {                                                        /* NEW */
+        background: #eee;                                               /* NEW */
+        box-shadow: 0 0 5px #999999;                                    /* NEW */
+        color: #333;                                                    /* NEW */
+        display: none;                                                  /* NEW */
+        font-size: 12px;                                                /* NEW */
+        left: 130px;                                                    /* NEW */
+        padding: 10px;                                                  /* NEW */
+        position: absolute;                                             /* NEW */
+        text-align: center;                                             /* NEW */
+        top: 95px;                                                      /* NEW */
+        width: 80px;                                                    /* NEW */
+        z-index: 10;                                                    /* NEW */
+      }
+    </style>
   </head>
   
       <body>
@@ -84,19 +99,66 @@ function run () {
             .attr("fill", function(d,i) {return color(i);})
             .attr("d", arc)
             .each(function(d) { this._current = d;});  
+        
+        var tooltip1 = d3.select("#Viz1")                               // NEW
+          .append('div')                                                // NEW
+          .attr('class', 'tooltip');                                    // NEW
+                      
+        tooltip1.append('div')                                           // NEW
+          .attr('class', 'label');  
+
+        var tooltip2 = d3.select("#Viz2")                               // NEW
+          .append('div')                                                // NEW
+          .attr('class', 'tooltip');                                    // NEW
+                      
+        tooltip2.append('div')                                           // NEW
+          .attr('class', 'label');  
+
+        var tooltip3 = d3.select("#Viz3")                               // NEW
+          .append('div')                                                // NEW
+          .attr('class', 'tooltip');                                    // NEW
+                      
+        tooltip3.append('div')                                           // NEW
+          .attr('class', 'label');                 
 
         svg1.selectAll("path").on("click", function(d){ 
             updateSvg("Viz2","cause","place",d.data.index);
             updateSvg("Viz3","activity","place",d.data.index);
-        });
+        })
+            .on('mouseover', function(d) {   
+            console.log(LOCATION[d.data.index]);                
+            tooltip1.select('.label').html(LOCATION[d.data.index]);            // NEW
+            tooltip1.style('display', 'block');                          // NEW
+          })
+          .on('mouseout', function() {                              // NEW
+            tooltip1.style('display', 'none');                           // NEW
+          });
+
         svg2.selectAll("path").on("click", function(d){ 
             updateSvg("Viz1","place","cause",d.data.index);
             updateSvg("Viz3","activity","cause",d.data.index);
-        });
+        })
+        .on('mouseover', function(d) {   
+            console.log(CAUSE[d.data.index]);                
+            tooltip2.select('.label').html(CAUSE[d.data.index]);            // NEW
+            tooltip2.style('display', 'block');                          // NEW
+          })
+          .on('mouseout', function() {                              // NEW
+            tooltip2.style('display', 'none');                           // NEW
+          });
+
         svg3.selectAll("path").on("click", function(d){ 
             updateSvg("Viz1","place","activity",d.data.index);
             updateSvg("Viz2","cause","activity",d.data.index);
-        });
+        })
+        .on('mouseover', function(d) {
+            console.log(ACTIVITY[d.data.index]);                
+            tooltip3.select('.label').html(ACTIVITY[d.data.label]);            // NEW
+            tooltip3.style('display', 'block');                          // NEW
+          })
+          .on('mouseout', function() {                              // NEW
+            tooltip3.style('display', 'none');                           // NEW
+          })
     }).get();
         
 }
@@ -105,9 +167,9 @@ function initializeSvg(id,width,height,radius){
     svg = d3.select(id).append("svg")
             .attr("width", width)
             .attr("height", height)
-            .text("hello")
         .append("g")
             .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")")
+
 
     return svg
 }
@@ -137,6 +199,23 @@ function updateSvg(viz,category,filter,num){
 
     path = d3.select(viz).data(pie(data)); // compute the new angles
     console.log(path);
+
+    if (viz === "Viz1"){
+        var title = "Location of Death"
+        } 
+    if (viz === "Viz2"){
+        var title = "Cause of Death"
+        } 
+    if (viz === "Viz3"){
+        var title = "Activity During Death"
+        }
+
+    d3.select('#' + viz).append("text")
+        .attr("x",200)
+        .attr("y",200)
+        .attr("dy","0.35em")
+        .style("text-anchor","middle")
+        .text(title);
 }
 
 function selector(r,filter,num){
@@ -239,6 +318,29 @@ var CAUSE = {
     "40":"Intentional self-harm (suicide) (*U03,X60-X84,Y87.0)",
     "41":"Assault (homicide) (*U01-*U02,X85-Y09,Y87.1)",
     "42":"All other external causes (Y10-Y36,Y87.2,Y89)"
+}
+
+var LOCATION = {
+    "0":"Home",
+    "1":"Residential institution",
+    "2":"School, other institution and public administrative area",
+    "3":"Sports and athletics area",
+    "4":"Street and highway",
+    "5":"Trade and service area",
+    "6":"Industrial and construction area",
+    "7":"Farm",
+    "8":"Other Specified Places",
+    "9":"Unspecified place"
+}
+
+var ACTIVITY = {
+    "0":"While engaged in sports activity",
+    "1":"While engaged in leisure activity",
+    "2":"While working for income",
+    "3":"While engaged in other types of work",
+    "4":"While resting, sleeping, eating (vital activities)",
+    "8":"While engaged in other specified activities",
+    "9":"During unspecified activity"
 }
     
 function getData () {
