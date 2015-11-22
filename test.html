@@ -71,13 +71,13 @@ function tabulate(data, columns) {
 
 function run () {
     getDataAvg(function(data) {
-      tabulate(data['AvgData'][0], ['cause','2003','2008','2013']);
-      console.log(data['AvgData'][0]); 
+      tabulate(data['AvgAge'], ['cause','2003','2008','2013']);
+      console.log(data['AvgAge']); 
     });
 
     getTopCause(function(data) {
-      tabulate(data['TopCause'][0], ['age','2003','2008','2013']);
-      console.log(data['TopCause'][0]); 
+      tabulate(data['AgeAndTopCause'], ['age','2003','2008','2013']);
+      console.log(data['AgeAndTopCause']); 
     });
 }
 
@@ -91,11 +91,11 @@ function run () {
 
 function getTotal (data,cause,year) {
     if (cause in data) { 
-	if (year in data[cause]) {
-	    if (data[cause][year].length > 0) { 
-		return data[cause][year][0].total;
-	    }
-	}
+    if (year in data[cause]) {
+        if (data[cause][year].length > 0) { 
+        return data[cause][year][0].total;
+        }
+    }
     }
     return 0;
 }
@@ -112,7 +112,7 @@ function createView (data) {
 
     var causes = Object.keys(data);
     causes.sort(function(a,b) { return d3.descending(getTotal(data,a,"2013"),
-						     getTotal(data,b,"2013")); })
+                             getTotal(data,b,"2013")); })
 
     max2013 = d3.max(causes.map(function(d) { return getTotal(data,d,"2013"); }));
     max2008 = d3.max(causes.map(function(d) { return getTotal(data,d,"2008"); }));
@@ -120,13 +120,13 @@ function createView (data) {
     var svg = d3.select("#viz");
     
     var y = d3.scale.linear()
-	.domain([0,Math.max(max2008,max2013)])
-	.range([+svg.attr("height")-10,10]);
+    .domain([0,Math.max(max2008,max2013)])
+    .range([+svg.attr("height")-10,10]);
 
     var g = svg.selectAll("g")
-	.data(causes)
-	.enter()
-	.append("g");
+    .data(causes)
+    .enter()
+    .append("g");
 
     // note: the width attribute holds strings
     var x2008 = +svg.attr("width")*1/5;
@@ -136,42 +136,42 @@ function createView (data) {
     var y2013 = function(d) { return y(getTotal(data,d,"2013")); };
 
     g.append("circle")
-	.attr("cx",x2008)
-	.attr("cy",y2008)
-	.attr("r","5")
-	.style("fill","red")
-	.style("stroke","none");
+    .attr("cx",x2008)
+    .attr("cy",y2008)
+    .attr("r","5")
+    .style("fill","red")
+    .style("stroke","none");
 
     g.append("circle")
-	.attr("cx",x2013)
-	.attr("cy",y2013)
-	.attr("r","5")
-	.style("fill","red")
-	.style("stroke","none");
+    .attr("cx",x2013)
+    .attr("cy",y2013)
+    .attr("r","5")
+    .style("fill","red")
+    .style("stroke","none");
 
     g.append("line")
-	.attr("x1",x2008)
-	.attr("y1",y2008)
-	.attr("x2",x2013)
-	.attr("y2",y2013)
-	.style("stroke","red")
-	.style("stroke-width","6px");
+    .attr("x1",x2008)
+    .attr("y1",y2008)
+    .attr("x2",x2013)
+    .attr("y2",y2013)
+    .style("stroke","red")
+    .style("stroke-width","6px");
 
     g.on("mouseover",function (d,i) {  
-	d3.select(this).select("line").style("stroke","blue");
-	d3.select(this)
-	    .append("text")
-	    .attr("class","label")
-	    .attr("x",+svg.attr("width")*3/5+20)
-	    .attr("y",function(d) { return y(getTotal(data,d,"2013")); })
-	    .attr("dy","0.35em")
-	    .style("stroke","black")
-	    .style("text-anchor","start")
-	    .text(function(d) { return CAUSE[d]; }) })
-	.on("mouseout",function() { 
-	d3.select(this).select("line").style("stroke","red");
-	    d3.selectAll(".label").remove();
-	});
+    d3.select(this).select("line").style("stroke","blue");
+    d3.select(this)
+        .append("text")
+        .attr("class","label")
+        .attr("x",+svg.attr("width")*3/5+20)
+        .attr("y",function(d) { return y(getTotal(data,d,"2013")); })
+        .attr("dy","0.35em")
+        .style("stroke","black")
+        .style("text-anchor","start")
+        .text(function(d) { return CAUSE[d]; }) })
+    .on("mouseout",function() { 
+    d3.select(this).select("line").style("stroke","red");
+        d3.selectAll(".label").remove();
+    });
 }
 
 
