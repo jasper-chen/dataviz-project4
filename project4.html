@@ -2,6 +2,14 @@
 <html>
   
   <head>
+    <style>
+        .legend {
+        font-size: 12px;
+        }
+        rect {
+        stroke-width: 2;
+        }    
+    </style>
     
     <meta charset="utf-8">
     <title>Jasper and Hayley - Project 4</title>
@@ -13,16 +21,17 @@
   </head>
   
       <body>
-        <div>
+        Instructions: When the graphs are first loaded, all data is represented from the <a href="http://www.cdc.gov/nchs/data_access/Vitalstatsonline.htm#Mortality_Multiple"> Mortality Multiple Cause dataset </a>. Clicking on a section in a donut chart filters other charts for that section.
 
-          <svg id="Viz1" width="400" height="400" style=" display:inline-block;">
+        <div>
+          <svg id="Viz1" width="400" height="800" style=" display:inline-block;">
           </svg>
           
-          <svg id="Viz2" width="400" height="400" style=" display:inline-block;">
+          <svg id="Viz2" width="400" height="800" style=" display:inline-block;">
           </svg>
-          <svg id="Viz3" width="400" height="400" style=" display:inline-block;">
+          <svg id="Viz3" width="400" height="800" style=" display:inline-block;">
           </svg>  
-        </div>
+        </div> 
       </body>
     <script>
 
@@ -31,6 +40,8 @@
  *
  */
 
+var legendRectSize = 18;
+var legendSpacing = 4;
 
 var GLOBAL = {data: []};
       
@@ -38,13 +49,15 @@ window.addEventListener("load",run);
 
 function run () {
     var width = 400,
-        height = 400,
+        height = 800,
         radius = Math.min(width, height) / 2;
 
-    var color = d3.scale.category20();
+    var color1 = d3.scale.category20();
+    var color2 = d3.scale.category20();
+    var color3 = d3.scale.category20();
 
     var arc = d3.svg.arc()
-        .innerRadius(radius - 100)
+        .innerRadius(radius - 40)
         .outerRadius(radius - 20);
 
     var pie = d3.layout.pie()
@@ -58,32 +71,115 @@ function run () {
     d3.json("new").on("progress", function() { console.log("progress", d3.event.loaded); })
     .on("load", function(json){
         //once data is loaded
-
         GLOBAL.data = json;
 
-        data = countbyColumn('Viz1','place', null, function() {return true}, null);
+        data1 = countbyColumn('Viz1','place', null, function() {return true}, null);
         var g = svg1.selectAll("path")
-            .data(pie(data))
+            .data(pie(data1))
             .enter().append("path")        
-            .attr("fill", function(d,i) {return color(i);})
+            .attr("fill", function(d,i) {return color1(d.data.index);})
             .attr("d", arc)
             .each(function(d) { this._current = d;})
 
-        data = countbyColumn('Viz2','cause', null, function() {return true}, null);
+        svg1.append("text")
+            .attr("text-anchor", "middle")
+            .text("Breakdown by Place")
+
+        data2 = countbyColumn('Viz2','cause', null, function() {return true}, null);
         var g = svg2.selectAll("path")
-            .data(pie(data))
+            .data(pie(data2))
             .enter().append("path")
-            .attr("fill", function(d,i) {return color(i);})
+            .attr("fill", function(d,i) {return color2(d.data.index);})
             .attr("d", arc)
             .each(function(d) { this._current = d;});  
 
-        data = countbyColumn('Viz3','activity', null, function() {return true},null);
+        svg2.append("text")
+            .attr("text-anchor", "middle")
+            .text("Breakdown by Manner of Death/Injury");            
+
+        data3 = countbyColumn('Viz3','activity', null, function() {return true}, null);
         var g = svg3.selectAll("path")
-            .data(pie(data))
+            .data(pie(data3))
             .enter().append("path")
-            .attr("fill", function(d,i) {return color(i);})
+            .attr("fill", function(d,i) {return color3(d.data.index);})
             .attr("d", arc)
-            .each(function(d) { this._current = d;});  
+            .each(function(d) { this._current = d;});
+
+        svg3.append("text")
+            .attr("text-anchor", "middle")
+            .text("Breakdown by Activity");              
+//
+        var legend1 = d3.select("#Viz1").select("svg").selectAll('.legend')
+            .data(pie(data1))
+            .enter()
+            .append('g')
+            .attr('class','legend')
+            .attr('transform', function(d,i) {
+                var height = legendRectSize + legendSpacing;
+                var offset = height * color1.domain().length / 2
+                var horz = 2 * legendRectSize;
+                var vert = i * height - offset - 650;
+                return 'translate(' + horz + ',' + -vert + ')';
+            });
+
+        var legend2 = d3.select("#Viz2").select("svg").selectAll('.legend')
+            .data(pie(data2))
+            .enter()
+            .append('g')
+            .attr('class','legend')
+            .attr('transform', function(d,i) {
+                var height = legendRectSize + legendSpacing;
+                var offset = height * color2.domain().length / 2
+                var horz = 2 * legendRectSize;
+                var vert = i * height - offset - 650;
+                return 'translate(' + horz + ',' + -vert + ')';
+            }); 
+
+        var legend3 = d3.select("#Viz3").select("svg").selectAll('.legend')
+            .data(pie(data3))
+            .enter()
+            .append('g')
+            .attr('class','legend')
+            .attr('transform', function(d,i) {
+                var height = legendRectSize + legendSpacing;
+                var offset = height * color3.domain().length / 2
+                var horz = 2 * legendRectSize;
+                var vert = i * height - offset - 650;
+                return 'translate(' + horz + ',' + -vert + ')';
+            });                       
+
+        legend1.append('rect')
+          .attr('width', legendRectSize)
+          .attr('height', legendRectSize)
+          .style('fill', function(d){ return color1(d.data.index);})
+          .style('stroke', function(d){ return color1(d.data.index);});
+
+        legend1.append('text')
+          .attr('x', legendRectSize + legendSpacing)
+          .attr('y', legendRectSize - legendSpacing)
+          .text(function(d) { return PLACE[d.data.index]; }); 
+
+        legend2.append('rect')
+          .attr('width', legendRectSize)
+          .attr('height', legendRectSize)
+          .style('fill', function(d){ return color2(d.data.index);})
+          .style('stroke', function(d){ return color2(d.data.index);});
+
+        legend2.append('text')
+          .attr('x', legendRectSize + legendSpacing)
+          .attr('y', legendRectSize - legendSpacing)
+          .text(function(d) { return MANNER[d.data.index]; }); 
+
+        legend3.append('rect')
+          .attr('width', legendRectSize)
+          .attr('height', legendRectSize)
+          .style('fill', function(d){ return color3(d.data.index);})
+          .style('stroke', function(d){ return color3(d.data.index);});
+
+        legend3.append('text')
+          .attr('x', legendRectSize + legendSpacing)
+          .attr('y', legendRectSize - legendSpacing)
+          .text(function(d) { return ACTIVITY[d.data.index]; });                                         
 
         svg1.selectAll("path").on("click", function(d){ 
             updateSvg("Viz2","cause","place",d.data.index);
@@ -105,7 +201,6 @@ function initializeSvg(id,width,height,radius){
     svg = d3.select(id).append("svg")
             .attr("width", width)
             .attr("height", height)
-            .text("hello")
         .append("g")
             .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")")
 
@@ -117,13 +212,13 @@ function updateSvg(viz,category,filter,num){
     data = countbyColumn(viz,category,filter,selector,num);
 
     var width = 400,
-        height = 400,
+        height = 800,
         radius = Math.min(width, height) / 2;
 
     var color = d3.scale.category20();    
 
     var arc = d3.svg.arc()
-        .innerRadius(radius - 100)
+        .innerRadius(radius - 40)
         .outerRadius(radius - 20);    
 
     var pie = d3.layout.pie()
@@ -156,7 +251,6 @@ function countbyColumn(viz,type, filter, pred,num){
         j_count = 0;
         var obj = {};
         for (j in thing[i]){
-            console.log(thing[i][j]);
             if (pred(thing[i][j],filter,num)){
                 j_count += thing[i][j]['count'];
                 total += thing[i][j]['count'];
@@ -175,13 +269,13 @@ function countbyColumn(viz,type, filter, pred,num){
 function arcTween(a) {
 
     var width = 400,
-        height = 400,
+        height = 800,
         radius = Math.min(width, height) / 2;
 
     var color = d3.scale.category20();    
 
     var arc = d3.svg.arc()
-        .innerRadius(radius - 100)
+        .innerRadius(radius - 40)
         .outerRadius(radius - 20);  
 
     var i = d3.interpolate(this._current, a);
@@ -191,6 +285,36 @@ function arcTween(a) {
   };
 }
 
+var PLACE = {
+    "1" : "Hospital, clinic or Medical Center - Inpatient",
+    "2" : "Hospital, clinic or Medical Center - Outpatient",
+    "3" : "Dead on Arrival",
+    "4" : "Decedent's home",
+    "5" : "Hospice facility",
+    "6" : "Nursing home/long term care",
+    "7" : "Other",
+    "9" : "Place of death unknown",
+}
+
+var ACTIVITY = {
+    "0" : "While engaged in sports activity",
+    "1" : "While engaged in leisure activity",
+    "2" : "While working for income",
+    "3" : "While engaged in other types of work",
+    "4" : "While resting, sleeping, eating",
+    "8" : "While engaged in other specified activities",
+    "9" : "During unspecified activity",
+}
+
+var MANNER = {
+    "1": "Accident",
+    "2": "Suicide",
+    "3": "Homicide",
+    "4": "Pending investigation",
+    "5": "Could not determine",
+    "6": "Self-Inflicited",
+    "7": "Natural",
+}
 /*
  * Convert a cause code to text
  *

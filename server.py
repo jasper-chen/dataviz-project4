@@ -248,18 +248,6 @@ def pullActivityData():
             newJson.append(activityJson)
         newest = group_by(newJson,"activity")
 
-
-        # for cause in groupedData.keys():
-        #     causeJson = {"cause": cause}
-        #     for row in groupedData[cause]:
-        #         age = converttoYearAge(row["ageKey"],row["avgAge"])
-
-        #         if row["year"] in causeJson:
-        #             causeJson[row["year"]] += (row["refinedAgeCount"]/float(row["recodeCount"]))*age
-        #         else:
-        #             causeJson[row["year"]] = (row["refinedAgeCount"]/float(row["recodeCount"]))*age
-
-        #     returnJson.append(causeJson)
         return newest
 
     except:
@@ -272,10 +260,10 @@ def newDataPull():
     cur = conn.cursor()
 
     try:
-        cur.execute("""SELECT Cause_Recode_39, Activity_Code, Place_Of_Death, COUNT(*)
+        cur.execute("""SELECT Manner_Of_Death, Activity_Code, Place_Of_Death, COUNT(*)
                       FROM mortality
-                      WHERE Activity_Code != ""
-                      GROUP BY Cause_Recode_39, Activity_Code, Place_Of_Death
+                      WHERE Activity_Code != "" AND Activity_Code != "9" AND Manner_Of_Death != ""
+                      GROUP BY Manner_Of_Death, Activity_Code, Place_Of_Death
                     """)
         returnJson = []
         data = []
@@ -374,17 +362,23 @@ def actvityData():
 @get('/new')
 def newData():
     print ("GETTING NEW DATA")
-    #newData = newDataPull()
+    data = newDataPull()
     #return {"ActivityData" : newData}
-    data = []
-    with open('./new.json') as f:
-        for line in f:
-            data.append(json.loads(line))
+    #data = []
+    # with open('./new.json') as f:
+    #     for line in f:
+    #         data.append(json.loads(line))
 
-    return {'ActivityData': data[0]['ActivityData'], 
-            'Viz1' : group_by(data[0]['ActivityData'],"place"), 
-            'Viz2' : group_by(data[0]['ActivityData'],"cause"),
-            'Viz3' : group_by(data[0]['ActivityData'],"activity")} 
+    # return {'ActivityData': data[0]['ActivityData'], 
+    #         'Viz1' : group_by(data[0]['ActivityData'],"place"), 
+    #         'Viz2' : group_by(data[0]['ActivityData'],"cause"),
+    #         'Viz3' : group_by(data[0]['ActivityData'],"activity")} 
+
+    return {
+            'Viz1' : group_by(data,"place"), 
+            'Viz2' : group_by(data,"cause"),
+            'Viz3' : group_by(data,"activity")} 
+
 
 def main (p):
     run(host='0.0.0.0', port=p)
