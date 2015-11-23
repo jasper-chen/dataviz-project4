@@ -323,38 +323,26 @@ def static (name="project4.html"):
 @get('/topcause')
 def ageData():
     print ("GETTING AGE DATA")
-    #AgeAndTopCause = pullbyAgeAndTopCause()
-    #return {"AgeAndTopCause" : AgeAndTopCause}
-    data = []
-    with open('./topcause.json') as f:
-        for line in f:
-            data.append(json.loads(line))
+    AgeAndTopCause = pullbyAgeAndTopCause()
+    return {"AgeAndTopCause" : AgeAndTopCause}
+    # data = []
+    # with open('./topcause.json') as f:
+    #     for line in f:
+    #         data.append(json.loads(line))
 
-    return {'TopCause': data}
+    # return {'TopCause': data}
 
 @get('/avg')
 def ageData():
     print ("GETTING AGE DATA")
-    #AvgAge = pullbyAvgAge()
-    #return {"AvgAge" : AvgAge}
+    AvgAge = pullbyAvgAge()
+    return {"AvgAge" : AvgAge}
     data = []
-    with open('./avgage.json') as f:
-        for line in f:
-            data.append(json.loads(line))
-
-    return {'AvgData': data}
-
-@get('/activity')
-def actvityData():
-    print ("GETTING ACTIVITY DATA")
-    ActivityData = pullActivityData()
-    return {"ActivityData" : ActivityData}
-    # data = []
-    # with open('./activity1.json') as f:
+    # with open('./avgage.json') as f:
     #     for line in f:
     #         data.append(json.loads(line))
 
-    # return {'Activity': data}    
+    # return {'AvgData': data}   
 
 # main entry point
 # run the server on the given port
